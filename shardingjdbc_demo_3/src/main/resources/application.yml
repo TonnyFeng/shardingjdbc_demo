@@ -1,0 +1,22 @@
+# 当前工程端口的配置
+server:
+  port: 8081
+
+spring:
+  application:
+    name: sharding-demo2
+  datasource:
+    driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver # 配置 DataSource Driver
+    url: jdbc:shardingsphere:classpath:config.yaml    # 指定 YAML 配置文件
+enabled: true
+
+
+# mybatis的配置
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+
+# 分页插件的配置
+pagehelper:
+  helperDialect: mysql
+  reasonable: true

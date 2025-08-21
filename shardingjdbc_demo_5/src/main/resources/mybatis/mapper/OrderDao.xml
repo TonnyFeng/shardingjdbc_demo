@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mysql.sharding.demo.dao.OrderDao">
+    <resultMap id="BaseResultMap" type="com.mysql.sharding.demo.entity.Order">
+        <id column="id" jdbcType="VARCHAR" property="id"/>
+        <result column="order_id" jdbcType="VARCHAR" property="orderId"/>
+        <result column="order_no" jdbcType="VARCHAR" property="orderNo"/>
+        <result column="user_id" jdbcType="VARCHAR" property="userId"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    </resultMap>
+
+    <select id="queryMyOrder" resultMap="OrderResultMap">
+        select
+        t.id as order_pk,
+        t.order_id,
+        t.order_no,
+        t.user_id,
+        t.create_time as order_create_time,
+        toi.id as order_item_pk,
+        toi.order_item_id,
+        toi.order_id as item_order_id,
+        toi.user_id as item_user_id,
+        toi.seller_id,
+        toi.create_time as order_item_create_time
+        from t_order t
+        inner join t_order_item toi on t.order_id = toi.order_id
+        where t.user_id = #{userId}
+    </select>
+
+    <resultMap id="OrderResultMap" type="com.mysql.sharding.demo.entity.Order">
+        <id column="order_pk" jdbcType="VARCHAR" property="id"/>
+        <result column="order_id" jdbcType="VARCHAR" property="orderId"/>
+        <result column="order_no" jdbcType="VARCHAR" property="orderNo"/>
+        <result column="user_id" jdbcType="VARCHAR" property="userId"/>
+        <result column="order_create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <collection property="orderItems" ofType="com.mysql.sharding.demo.entity.OrderItem">
+            <id column="order_item_pk" jdbcType="VARCHAR" property="id"/>
+            <result column="order_item_id" jdbcType="VARCHAR" property="orderItemId"/>
+            <result column="item_order_id" jdbcType="VARCHAR" property="orderId"/>
+            <result column="item_user_id" jdbcType="VARCHAR" property="userId"/>
+            <result column="seller_id" jdbcType="VARCHAR" property="sellerId"/>
+            <result column="order_item_create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        </collection>
+    </resultMap>
+
+</mapper>

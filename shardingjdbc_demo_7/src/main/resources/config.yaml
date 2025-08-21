@@ -1,0 +1,230 @@
+# ----------------- 逻辑库名 -----------------
+dataSources:
+  ds0-master:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/order0?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+  ds1-master:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/order1?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+  ds0-slave:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3307/order0?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+  ds1-slave:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3307/order1?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+# ===================== 分片规则配置 =====================
+rules:
+  - !ENCRYPT
+    tables:
+      t_user: # 加密表名称
+        columns:
+          user_name: # 加密列名称
+            cipher:
+              name: user_name # 密文列名称
+              encryptorName: aes_encryptor
+            assistedQuery: # 辅助查询列名称
+              name: user_name_assisted
+              encryptorName: assisted_encryptor
+            likeQuery:
+              name: user_name_like # 模糊查询列名称
+              encryptorName: like_encryptor
+          pwd:
+            cipher:
+              name: pwd
+              encryptorName: aes_encryptor
+            assistedQuery:
+              name: pwd_cipher
+              encryptorName: assisted_encryptor
+    encryptors:
+      aes_encryptor:
+        type: AES
+        props:
+          aes-key-value: 123456abc
+          digest-algorithm-name: SHA-1
+      assisted_encryptor:
+        type: MD5
+      like_encryptor:
+        type: CHAR_DIGEST_LIKE
+  - !READWRITE_SPLITTING
+    dataSourceGroups:
+      ds0:
+        writeDataSourceName: ds0-master
+        readDataSourceNames:
+          - ds0-slave
+        transactionalReadQueryStrategy: FIXED # 事务内读请求的路由策略，可选值：PRIMARY（路由至主库）、FIXED（同一事务内路由至固定数据源）、DYNAMIC（同一事务内路由至非固定数据源）。默认值：DYNAMIC
+        loadBalancerName: round_robin
+      ds1:
+        writeDataSourceName: ds1-master
+        readDataSourceNames:
+          - ds1-slave
+        transactionalReadQueryStrategy: FIXED # 事务内读请求的路由策略，可选值：PRIMARY（路由至主库）、FIXED（同一事务内路由至固定数据源）、DYNAMIC（同一事务内路由至非固定数据源）。默认值：DYNAMIC
+        loadBalancerName: round_robin
+    loadBalancers:
+      round_robin:
+        type: ROUND_ROBIN
+  - !SHARDING
+    bindingTables:
+      - t_order,t_order_item
+    tables:
+      t_user:
+        actualDataNodes: ds$->{0..1}.t_user_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: user_id
+            shardingAlgorithmName: user_inline
+#        keyGenerateStrategy: # 主键生成策略
+#          column: id
+#          keyGeneratorName: snowflake
+        # 配置t_order的分库规则
+        databaseStrategy:
+          standard: # 标准分片策略 complex 复合分片策略 inline 行表达式分片策略 none 不分片
+            shardingColumn: user_id
+            # 此处使用的就是我们在sharding-algorithms里面定义的规则
+            shardingAlgorithmName: database_inline
+      t_order:
+        actualDataNodes: ds$->{0..1}.t_order_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: order_id
+            shardingAlgorithmName: order_inline
+        keyGenerateStrategy: # 主键生成策略
+          column: id
+          keyGeneratorName: snowflake
+        # 配置t_order的分库规则
+        databaseStrategy:
+          standard: # 标准分片策略 complex 复合分片策略 inline 行表达式分片策略 none 不分片
+            shardingColumn: user_id
+            # 此处使用的就是我们在sharding-algorithms里面定义的规则
+            shardingAlgorithmName: database_inline
+      t_order_item:
+        actualDataNodes: ds$->{0..1}.t_order_item_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: order_id
+            shardingAlgorithmName: order_item_inline
+        # 配置t_order的分库规则
+        databaseStrategy:
+          standard:
+            shardingColumn: user_id
+            # 此处使用的就是我们在sharding-algorithms里面定义的规则
+            shardingAlgorithmName: database_inline
+        keyGenerateStrategy: # 主键生成策略
+          column: id
+          keyGeneratorName: snowflake
+    autoTables:
+      t_order_mod:
+        logicTable: t_order_mod
+        actualDataSources: ds$->{0..1}
+        shardingStrategy: # 切分策略
+          standard: # 用于单分片键的标准分片场景
+            shardingColumn: order_id # 分片列名称
+            shardingAlgorithmName: order_mod_table # 自动分片算法名称
+      t_order_hash_mod:
+        logicTable: t_order_hash_mod
+        actualDataSources: ds$->{0..1}
+        shardingStrategy: # 切分策略
+          standard: # 用于单分片键的标准分片场景
+            shardingColumn: order_id # 分片列名称
+            shardingAlgorithmName: order_hash_mod_table # 自动分片算法名称
+      t_order_volume_range:
+        logicTable: t_order_volume_range
+        actualDataSources: ds$->{0..1}
+        shardingStrategy: # 切分策略
+          standard: # 用于单分片键的标准分片场景
+            shardingColumn: order_id # 分片列名称
+            shardingAlgorithmName: order_volume_range_table # 自动分片算法名称
+      t_order_boundary_range:
+        logicTable: t_order_volume_range
+        actualDataSources: ds$->{0..1}
+        shardingStrategy: # 切分策略
+          standard: # 用于单分片键的标准分片场景
+            shardingColumn: order_id # 分片列名称
+            shardingAlgorithmName: order_boundary_range_table # 自动分片算法名称
+      t_order_auto_interval:
+        logicTable: t_order_auto_interval
+        actualDataSources: ds$->{0..1}
+        shardingStrategy: # 切分策略
+          standard: # 用于单分片键的标准分片场景
+            shardingColumn: create_time # 分片列名称
+            shardingAlgorithmName: order_auto_interval_table # 自动分片算法名称
+    keyGenerators:
+      # 此处必须要配置，否则会导致报错，因为shardingsphere-jdbc-core-spring-boot-starter需要加载此项配置，官网的demo例子有错
+      snowflake:
+        type: SNOWFLAKE
+        props:
+          worker-id: 123
+    shardingAlgorithms:
+      # t_order_mod的表的分片规则
+      order_mod_table:
+        type: MOD
+        props:
+          sharding-count: 4
+      # t_order_hash_mod的表的分片规则
+      order_hash_mod_table:
+        type: HASH_MOD
+        props:
+          sharding-count: 4
+      order_volume_range_table:
+        type: VOLUME_RANGE
+        props:
+          range-lower: 100
+          range-upper: 1000
+          # 分片的区间的数据的间隔  小于100 入表0 100～200 入表1 200～300 入表2 300～400 入表3 400～500 入表4 500～600 入表5 600～700 入表6 700～800 入表7 800～900 入表8 900～1000 入表9 1000~无穷 入表10
+          sharding-volume: 100
+      order_boundary_range_table:
+        type: BOUNDARY_RANGE
+        props:
+          # 表示0~999为t_order_boundary_range0，1000~19999为t_order_boundary_range1，20000~299999为t_order_boundary_range2，300000~无穷大为t_order_boundary_range3
+          sharding-ranges: 1000,20000,300000
+      order_auto_interval_table:
+        type: AUTO_INTERVAL # 自动分片算法 小于 2020-01-01 23:59:59 入表0 2020-01-01 00:00:00~2021-01-01 23:59:59 入表1 2021-01-02 00:00:00~2022-01-01 23:59:59 入表2 2022-01-01 23:59:59 ~ 入表3
+        props:
+          datetime-lower: '2020-01-01 23:59:59'
+          datetime-upper: '2022-01-01 23:59:59'
+          # 以1年度为单位进行划分
+          sharding-seconds: '31536000'
+      complex_table_inline:
+        # 配置分片算法类型，此处的值为OrderTableComplex类中getType方法中配置的值
+        type: OrderTableComplex
+        props:
+          # 配置分片算法的类
+          algorithm-class-name: com.mysql.sharding.demo.complex.OrderTableComplex
+      complex_db_inline:
+        # 配置分片算法类型，此处的值为OrderDbComplex类中getType方法中配置的值
+        type: OrderDbComplex
+        props:
+          # 配置分片算法的类
+          algorithm-class-name: com.mysql.sharding.demo.complex.OrderDbComplex
+      order_inline:
+        type: INLINE
+        props:
+          algorithm-expression: t_order_$->{order_id % 4}
+      user_inline:
+        type: INLINE
+        props:
+          algorithm-expression: t_user_$->{user_id % 4}
+      order_item_inline:
+        type: INLINE
+        props:
+          algorithm-expression: t_order_item_$->{order_id % 4}
+      # database-inline这个名称一样大家可以根据自己的数据库来随便取，当前为分库的逻辑配置
+      database_inline:
+        type: INLINE
+        props:
+          # 此处根据order_id取余来实现指向相应的数据库，例如你的order_id为1则指向db1数据库，order_id为2则指向db0数据库
+          algorithm-expression: ds$->{user_id % 2}
+# ===================== 全局属性 =====================
+props:
+  sql-show: true   # 控制台打印 SQL

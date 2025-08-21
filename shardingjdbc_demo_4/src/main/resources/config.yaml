@@ -1,0 +1,87 @@
+# ----------------- 逻辑库名 -----------------
+databaseName: ds0,ds1 # 逻辑库名，可映射到物理库
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/order0?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+  ds1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/order1?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    username: root
+    password: '123456'
+# ===================== 分片规则配置 =====================
+rules:
+  - !SHARDING
+    bindingTables:
+      - t_order,t_order_item
+    tables:
+      t_order:
+        actualDataNodes: ds$->{0..1}.t_order_$->{0..3}
+        tableStrategy:
+          complex:
+            shardingColumns: order_id,user_id
+            shardingAlgorithmName: mytable_inline
+        keyGenerateStrategy: # 主键生成策略
+          column: id
+          keyGeneratorName: snowflake
+        # 配置t_order的分库规则
+        databaseStrategy:
+          complex:
+            shardingColumns: order_id,user_id
+            # 此处使用的就是我们在sharding-algorithms里面定义的规则
+            shardingAlgorithmName: mydatabase_inline
+      t_order_item:
+        actualDataNodes: ds$->{0..1}.t_order_item_$->{0..3}
+        tableStrategy:
+          complex:
+            shardingColumns: order_id,user_id
+            shardingAlgorithmName: mytable_inline
+        # 配置t_order的分库规则
+        databaseStrategy:
+          complex:
+            shardingColumns: order_id,user_id
+            # 此处使用的就是我们在sharding-algorithms里面定义的规则
+            shardingAlgorithmName: mydatabase_inline
+        keyGenerateStrategy: # 主键生成策略
+          column: id
+          keyGeneratorName: snowflake
+    keyGenerators:
+      # 此处必须要配置，否则会导致报错，因为shardingsphere-jdbc-core-spring-boot-starter需要加载此项配置，官网的demo例子有错
+      snowflake:
+        type: SNOWFLAKE
+        props:
+          worker-id: 123
+    shardingAlgorithms:
+      mytable_inline:
+        # 配置分片算法类型，此处的值为OrderTableComplex类中getType方法中配置的值
+        type: OrderTableComplex
+        props:
+          # 配置分片算法的类
+          algorithm-class-name: com.mysql.sharding.demo.complex.OrderTableComplex
+      mydatabase_inline:
+        # 配置分片算法类型，此处的值为OrderDbComplex类中getType方法中配置的值
+        type: OrderDbComplex
+        props:
+          # 配置分片算法的类
+          algorithm-class-name: com.mysql.sharding.demo.complex.OrderDbComplex
+      order_inline:
+        type: INLINE
+        props:
+          algorithm-expression: t_order_$->{order_id % 4}
+      order_item_inline:
+        type: INLINE
+        props:
+          algorithm-expression: t_order_item_$->{order_id % 4}
+      # database-inline这个名称一样大家可以根据自己的数据库来随便取，当前为分库的逻辑配置
+      database_inline:
+        type: INLINE
+        props:
+          # 此处根据order_id取余来实现指向相应的数据库，例如你的order_id为1则指向db1数据库，order_id为2则指向db0数据库
+          algorithm-expression: ds$->{user_id % 2}
+# ===================== 全局属性 =====================
+props:
+  sql-show: true   # 控制台打印 SQL

@@ -1,0 +1,4 @@
+com.mysql.sharding.demo.complex.OrderTableComplex
+com.mysql.sharding.demo.complex.OrderDbComplex
+com.mysql.sharding.demo.complex.ModuloHintShardingDbAlgorithm
+com.mysql.sharding.demo.complex.ModuloHintShardingTableAlgorithm

@@ -1,0 +1,53 @@
+package com.mysql.sharding.demo.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+@Data
+@Table(name = "t_broadcast_order")
+public class BroadcastOrder implements Serializable {
+    /**
+     * 主键
+     */
+    @Id
+    @Column(name = "id")
+    private Long id;
+    /**
+     * 订单流水ID
+     */
+    @Column(name = "order_id")
+    private Long orderId;
+
+    /**
+     * 用户流水ID
+     */
+    @Column(name = "user_id")
+    private Long userId;
+
+    /**
+     * 订单编号
+     */
+    @Column(name = "order_no")
+    private String orderNo;
+
+    @Column(name = "order_state")
+    private String orderState;
+    /**
+     * 订单创建时间
+     */
+    @Column(name = "create_time")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
+    private Date createTime;
+
+    @Transient
+    private List<OrderItem> orderItems;
+}
+

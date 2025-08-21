@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mysql.sharding.demo.dao.UserDao">
+    <resultMap id="BaseResultMap" type="com.mysql.sharding.demo.entity.User">
+        <id column="user_id" jdbcType="VARCHAR" property="userId"/>
+        <result column="user_name" jdbcType="VARCHAR" property="userName"/>
+        <result column="user_name_assisted" jdbcType="VARCHAR" property="userNameAssisted"/>
+        <result column="user_name_like" jdbcType="VARCHAR" property="userNameLike"/>
+        <result column="pwd" jdbcType="VARCHAR" property="pwd"/>
+        <result column="user_email" jdbcType="VARCHAR" property="userEmail"/>
+    </resultMap>
+
+    <select id="queryUser" resultMap="BaseResultMap">
+        select * from t_user where user_id = #{userId} and user_name = #{userName} and pwd = #{pwd}
+    </select>
+
+    <select id="queryUserLike" resultMap="BaseResultMap">
+        select * from t_user where user_id = #{userId} and user_name like concat('%',#{userName},'%') and pwd = #{pwd}
+    </select>
+</mapper>
+

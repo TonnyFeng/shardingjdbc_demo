@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>org.example</groupId>
+    <artifactId>shardingjdbc_demo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>shardingjdbc_demo</name>
+    <description>shardingjdbc_demo</description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+    <modules>
+        <module>shardingjdbc_demo_1</module><!--分表-->
+        <module>shardingjdbc_demo_2</module><!--分库分表-->
+        <module>shardingjdbc_demo_3</module><!--分库分表绑定表-->
+        <module>shardingjdbc_demo_4</module><!--分库分表绑定表自定义分库分表规则-->
+        <module>shardingjdbc_demo_5</module><!--分库分表绑定表读写分离-->
+        <module>shardingjdbc_demo_6</module><!--加密表名称-->
+        <module>shardingjdbc_demo_7</module><!--自动分片 MOD HASH_MOD VOLUME_RANGE BOUNDARY_RANGE AUTO_INTERVAL-->
+        <module>shardingjdbc_demo_8</module><!-- HINT强制路由 BROADCAST广播表-->
+        <module>shardingjdbc_demo_9</module><!-- 影子库 脱敏-->
+    </modules>
+    <dependencyManagement>
+        <dependencies>
+            <!-- https://mvnrepository.com/artifact/tk.mybatis/mapper-spring-boot-starter -->
+            <dependency>
+                <groupId>tk.mybatis</groupId>
+                <artifactId>mapper-spring-boot-starter</artifactId>
+                <version>5.0.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

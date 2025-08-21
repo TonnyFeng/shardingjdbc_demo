@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mysql.sharding.demo.dao.OrderAutoIntervalDao">
+    <resultMap id="BaseResultMap" type="com.mysql.sharding.demo.entity.OrderAutoInterval">
+        <id column="order_id" jdbcType="VARCHAR" property="orderId"/>
+        <result column="order_no" jdbcType="VARCHAR" property="orderNo"/>
+        <result column="user_Id" jdbcType="VARCHAR" property="userId"/>
+        <result column="create_time" jdbcType="DATE" property="createTime"/>
+    </resultMap>
+
+    <select id="queryOrderAutoIntervalList" resultMap="BaseResultMap">
+        select *
+        from t_order_auto_interval
+        where create_time > #{createStart}
+          and  <![CDATA[ create_time < #{createEnd}
+        ]]>
+    </select>
+
+</mapper>
